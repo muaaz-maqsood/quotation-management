@@ -1,0 +1,2 @@
+# TMC Quote web app uses Python stdlib only.
+# This file exists so Vercel auto-detects the Python runtime.
