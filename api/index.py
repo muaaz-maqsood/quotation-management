@@ -90,7 +90,17 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires lowercase
         if not route and not path.startswith("/api/"):
             route = ROUTES.get("/api" + path)
         if not route:
-            self._json(404, {"ok": False, "error": f"no route {path}"})
+            self._json(404, {
+                "ok": False,
+                "error": f"no route {path}",
+                "_debug": {
+                    "self_path": self.path,
+                    "parsed_path": path,
+                    "version": "v4-debug",
+                    "routes_count": len(ROUTES),
+                    "has_config": "/api/config" in ROUTES,
+                },
+            })
             return
         try:
             if self.command == "POST":
