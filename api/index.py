@@ -78,6 +78,11 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires lowercase
     def _dispatch(self):
         parsed = urlparse(self.path)
         path = parsed.path
+        # Built-in diagnostic route — handled directly so it always works
+        # regardless of whether the import-time route registration ran.
+        if path in ("/api/config", "/api/_config", "/api/diag"):
+            self._json(200, _api_config({}))
+            return
         route = ROUTES.get(path)
         if not route and not path.startswith("/api/"):
             route = ROUTES.get("/api" + path)
