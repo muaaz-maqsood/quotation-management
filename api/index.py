@@ -24,6 +24,34 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from server import ROUTES  # noqa: E402  (import after sys.path tweak)
+import server as _server  # noqa: E402
+
+
+def _api_config(_body):
+    """Diagnostic endpoint: returns the env-var config the function is using.
+    Password is masked. Use this to verify Vercel env vars are set correctly.
+    """
+    pw = _server.ODOO_PASS or ""
+    return {
+        "ok": True,
+        "odoo_url": _server.ODOO_URL,
+        "odoo_db": _server.ODOO_DB,
+        "odoo_user": _server.ODOO_USER,
+        "odoo_pass_set": bool(pw),
+        "odoo_pass_len": len(pw),
+        "env_vars_present": {
+            "ODOO_URL": "ODOO_URL" in os.environ,
+            "ODOO_DB": "ODOO_DB" in os.environ,
+            "ODOO_USER": "ODOO_USER" in os.environ,
+            "ODOO_PASS": "ODOO_PASS" in os.environ,
+        },
+    }
+
+
+# Register the diagnostic route (only inside the Vercel function — does not
+# affect the local server.py route table at runtime since this module is
+# loaded only on Vercel).
+ROUTES["/api/config"] = _api_config
 
 
 class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires lowercase `handler`)
@@ -69,7 +97,17 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires lowercase
             self._json(200, result)
         except Exception as exc:  # noqa: BLE001
             traceback.print_exc()
-            self._json(500, {"ok": False, "error": str(exc)})
+            err = str(exc)
+            hint = None
+            low = err.lower()
+            if "connection refused" in low or "errno 111" in low or "errno -2" in low or "name or service" in low:
+                hint = (
+                    "Cannot reach Odoo. Verify ODOO_URL/ODOO_DB/ODOO_USER/ODOO_PASS "
+                    "are set in Vercel Project Settings -> Environment Variables, "
+                    "and that the Odoo host is publicly reachable from the internet. "
+                    f"Current ODOO_URL={_server.ODOO_URL!r}"
+                )
+            self._json(500, {"ok": False, "error": err, "hint": hint})
 
     def do_GET(self):  # noqa: N802
         self._dispatch()
