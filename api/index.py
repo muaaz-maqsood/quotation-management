@@ -80,8 +80,11 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires lowercase
         path = parsed.path
         # Built-in diagnostic route — handled directly so it always works
         # regardless of whether the import-time route registration ran.
+        # VERSION_MARKER: v3-2026-05-07
         if path in ("/api/config", "/api/_config", "/api/diag"):
-            self._json(200, _api_config({}))
+            cfg = _api_config({})
+            cfg["version"] = "v3-2026-05-07"
+            self._json(200, cfg)
             return
         route = ROUTES.get(path)
         if not route and not path.startswith("/api/"):
