@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TMC Quote — Pre-Presentation Demo</title>
+<style>
+  :root {
+    --brand: #1e3a5f;
+    --brand-light: #2c5282;
+    --accent: #0a7c6b;
+    --accent-light: #14a085;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1a202c;
+    --muted: #64748b;
+    --highlight: #fef3c7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+  .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
+  /* Top bar */
+  .topbar { grid-column: 1 / -1; background: var(--brand); color: #fff; display: flex; align-items: center; padding: 0 20px; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10; }
+  .brand { font-weight: 700; font-size: 15px; letter-spacing: 0.3px; }
+  .brand small { opacity: 0.7; font-weight: 400; margin-left: 8px; }
+  .topbar-sep { flex: 1; }
+  .quote-id { font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 4px; }
+  .state-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .state-scratchpad { background: #fef3c7; color: #92400e; }
+  .state-l1 { background: #dbeafe; color: #1e40af; }
+  .state-l2 { background: #e0e7ff; color: #4338ca; }
+  .state-l3 { background: #ede9fe; color: #6d28d9; }
+  .state-approved { background: #d1fae5; color: #065f46; }
+  .state-pushed { background: #a7f3d0; color: #064e3b; }
+  .state-draft { background: #e5e7eb; color: #374151; }
+  .state-rejected { background: #fee2e2; color: #991b1b; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+  /* Sidebar */
+  .sidebar { background: #ffffff; border-right: 1px solid var(--border); padding: 12px 0; overflow-y: auto; }
+  .nav-section { padding: 6px 16px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 12px; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; color: var(--text); font-size: 13px; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: #f8fafc; }
+  .nav-item.active { background: #eef2f7; border-left-color: var(--accent); color: var(--brand); font-weight: 600; }
+  .nav-item .icon { width: 18px; height: 18px; display: inline-block; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 8px; }
+  /* Main area */
+  .main { overflow-y: auto; padding: 20px 24px; position: relative; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .view-title { font-size: 20px; font-weight: 700; color: var(--brand); }
+  .view-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .actions { display: flex; gap: 8px; }
+  .btn { padding: 7px 14px; border-radius: 5px; border: 1px solid var(--border); background: #fff; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+  .btn:hover { background: #f8fafc; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-light); }
+  .btn-brand { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn-warn { background: var(--warn); color: #fff; border-color: var(--warn); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--brand); margin-bottom: 10px; }
+  /* Table */
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.grid th { background: #f8fafc; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  table.grid tr:hover { background: #fafbfd; }
+  table.grid td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  /* Utilities */
+  .row { display: flex; gap: 16px; }
+  .col { flex: 1; }
+  .muted { color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pill-info { background: #dbeafe; color: #1e40af; }
+  .pill-warn { background: #fef3c7; color: #92400e; }
+  .pill-ok { background: #d1fae5; color: #065f46; }
+  .pill-err { background: #fee2e2; color: #991b1b; }
+  /* Editable cell styling */
+  [contenteditable="true"] { outline: none; cursor: text; transition: box-shadow 0.15s; }
+  [contenteditable="true"]:hover { box-shadow: inset 0 0 0 1px var(--accent-light); }
+  [contenteditable="true"]:focus { box-shadow: inset 0 0 0 2px var(--accent); background: #ecfdf5 !important; }
+  td[contenteditable="true"], th[contenteditable="true"] { position: relative; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">TMC Quote<small>Pre-Sales Web App</small></div>
+    <div class="topbar-sep"></div>
+    <div class="quote-id" id="topQuoteId">Q/2026/0042</div>
+    <div class="state-badge state-scratchpad" id="topStateBadge">Scratchpad · V3</div>
+    <div class="avatar">SU</div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="nav-section">Workspace</div>
+    <div class="nav-item active" data-view="dashboard"><span class="icon">&#9635;</span> Dashboard</div>
+    <div class="nav-item" data-view="newquote"><span class="icon">&#43;</span> New Quote</div>
+
+    <div class="nav-section">Current Quote</div>
+    <div class="nav-item" data-view="builder"><span class="icon">&#9783;</span> Quote Builder</div>
+    <div class="nav-item" data-view="travel"><span class="icon">&#9992;</span> Travel Plans</div>
+    <div class="nav-item" data-view="payment"><span class="icon">&#8383;</span> Payment Plan</div>
+    <div class="nav-item" data-view="scenarios"><span class="icon">&#8942;</span> Scenarios<span class="nav-badge">3</span></div>
+
+    <div class="nav-section">Governance</div>
+    <div class="nav-item" data-view="approvals"><span class="icon">&#10003;</span> Approvals</div>
+    <div class="nav-item" data-view="versions"><span class="icon">&#8635;</span> Versions</div>
+    <div class="nav-item" data-view="push"><span class="icon">&#9166;</span> Push to Odoo</div>
+
+    <div class="nav-section">Reference</div>
+    <div class="nav-item" data-view="architecture"><span class="icon">&#9881;</span> Architecture</div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" id="mainArea">
+    <!-- =============== DASHBOARD =============== -->
+    <section id="view-dashboard" class="view active">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Quote Dashboard</div>
+          <div class="view-subtitle">All active, pending and won quotations for pre-sales team</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Filter</button>
+          <button class="btn">Export</button>
+          <button class="btn btn-primary" onclick="document.querySelector('[data-view=newquote]').click()">+ New Quote</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:16px">
+        <div class="card col" style="margin:0">
+          <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Active Quotes</div>
+          <div style="font-size:28px;font-weight:700;color:var(--brand);margin-top:4px">12</div>
+          <div class="muted" style="font-size:11px">Drafting or in approval</div>
+        </div>
+        <div class="card col" style="margin:0">
+          <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Pending My Approval</div>
+          <div style="font-size:28px;font-weight:700;color:var(--warn);margin-top:4px">3</div>
+          <div class="muted" style="font-size:11px">Awaiting L1 / L2 / L3 action</div>
+        </div>
+        <div class="card col" style="margin:0">
+          <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Won Value (Q1)</div>
+          <div style="font-size:28px;font-weight:700;color:var(--accent);margin-top:4px">PKR 4.2M</div>
+          <div class="muted" style="font-size:11px">3 quotes converted</div>
+        </div>
+        <div class="card col" style="margin:0">
+          <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Win Rate</div>
+          <div style="font-size:28px;font-weight:700;color:var(--brand-light);margin-top:4px">68%</div>
+          <div class="muted" style="font-size:11px">Last 90 days</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Quotations</div>
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Quote ID</th>
+              <th>Customer</th>
+              <th>Project</th>
+              <th>Duration</th>
+              <th class="num">Budget</th>
+              <th class="num">Price</th>
+              <th class="num">Margin</th>
+              <th>State</th>
+              <th>Owner</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#fffbeb">
+              <td><strong>Q/2026/0042</strong></td>
+              <td>SABIC</td>
+              <td>SAP S/4HANA Brownfield</td>
+              <td>6 months</td>
+              <td class="num">45,000,000</td>
+              <td class="num">50,570,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-scratchpad">Scratchpad</span></td>
+              <td>Safi U.</td>
+              <td><button class="btn btn-sm" onclick="document.querySelector('[data-view=builder]').click()">Open</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0041</td>
+              <td>Engro</td>
+              <td>Warehouse Mgmt Implementation</td>
+              <td>4 months</td>
+              <td class="num">18,500,000</td>
+              <td class="num">21,275,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-l2">L2 Pending</span></td>
+              <td>Aisha M.</td>
+              <td><button class="btn btn-sm">Open</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0040</td>
+              <td>Saudi Aramco</td>
+              <td>FICO Rollout – Phase 2</td>
+              <td>9 months</td>
+              <td class="num">72,000,000</td>
+              <td class="num">82,800,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-l3">L3 Pending</span></td>
+              <td>Bilal K.</td>
+              <td><button class="btn btn-sm">Open</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0039</td>
+              <td>Unilever</td>
+              <td>BTP Integration Suite</td>
+              <td>3 months</td>
+              <td class="num">9,200,000</td>
+              <td class="num">10,580,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-approved">Approved</span></td>
+              <td>Safi U.</td>
+              <td><button class="btn btn-sm" onclick="document.querySelector('[data-view=push]').click()">Push</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0038</td>
+              <td>PTCL</td>
+              <td>HR Payroll Revamp</td>
+              <td>5 months</td>
+              <td class="num">14,000,000</td>
+              <td class="num">16,100,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-pushed">Pushed · Won</span></td>
+              <td>Aisha M.</td>
+              <td><button class="btn btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0037</td>
+              <td>K-Electric</td>
+              <td>MM/SD Optimization</td>
+              <td>6 months</td>
+              <td class="num">26,500,000</td>
+              <td class="num">30,475,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-l1">L1 Pending</span></td>
+              <td>Umer F.</td>
+              <td><button class="btn btn-sm">Open</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0036</td>
+              <td>Maersk KSA</td>
+              <td>Transportation Mgmt</td>
+              <td>4 months</td>
+              <td class="num">19,800,000</td>
+              <td class="num">22,770,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-rejected">Rejected · L2</span></td>
+              <td>Bilal K.</td>
+              <td><button class="btn btn-sm">Revise</button></td>
+            </tr>
+            <tr>
+              <td>Q/2026/0035</td>
+              <td>Habib Bank</td>
+              <td>S/4HANA Finance Core</td>
+              <td>7 months</td>
+              <td class="num">38,000,000</td>
+              <td class="num">43,700,000</td>
+              <td class="num">15.0%</td>
+              <td><span class="state-badge state-draft">Draft</span></td>
+              <td>Safi U.</td>
+              <td><button class="btn btn-sm">Open</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =============== NEW QUOTE FORM =============== -->
+    <section id="view-newquote" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">New Quotation — Form Entry</div>
+          <div class="view-subtitle">Pre-sales fills structured inputs · grid is generated automatically · no Excel, no ad-hoc cells</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Save Draft</button>
+          <button class="btn btn-primary" onclick="document.querySelector('[data-view=builder]').click()">Generate Quote &rarr;</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">1 · Opportunity</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <label>Customer
+            <select style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option>SABIC — KSA</option>
+              <option>Engro Corporation</option>
+              <option>Saudi Aramco</option>
+              <option>+ Add new (punch to Odoo res.partner)</option>
+            </select>
+            <small class="muted">From Odoo res.partner · read-only dropdown</small>
+          </label>
+          <label>Opportunity (CRM Lead)
+            <select style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option>SABIC – S/4HANA Brownfield Migration</option>
+              <option>SABIC – Phase 2 BTP</option>
+            </select>
+            <small class="muted">From Odoo crm.lead</small>
+          </label>
+          <label>Project Name
+            <input type="text" value="SAP S/4HANA Brownfield Migration" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+            <small class="muted">Free text</small>
+          </label>
+          <label>Project Duration (months)
+            <input type="number" value="6" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+            <small class="muted">Drives grid columns</small>
+          </label>
+          <label>Start Month
+            <input type="month" value="2027-01" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+          </label>
+          <label>Currency
+            <select style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option>PKR (base)</option><option>USD</option><option>SAR</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">2 · Budget & Commercial Basis</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <label>Pre-Budget Available?
+            <select id="fPreBudget" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option value="yes">Yes — customer shared budget</option>
+              <option value="no">No — we propose price</option>
+            </select>
+          </label>
+          <label>Budget Amount (PKR)
+            <input type="number" value="45000000" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+            <small class="muted">Shown only if pre-budget = Yes</small>
+          </label>
+          <label>Costing Basis
+            <select style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option>Cost Ceiling — fit cost under budget</option>
+              <option>Price Target — hit price, derive margin</option>
+            </select>
+          </label>
+          <label>Target Margin %
+            <input type="number" value="15" step="0.5" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+          </label>
+          <label>Skill Rate Selector
+            <select style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+              <option>Mean</option><option>Median</option><option>Max</option><option>Market</option>
+            </select>
+            <small class="muted">From Odoo skill.master</small>
+          </label>
+          <label>CTC Increment Factor
+            <input type="number" value="1.15" step="0.01" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px">
+            <small class="muted">March-year cross-over auto-applied</small>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">3 · Skill &amp; Resource Plan <button class="btn btn-sm" style="float:right">+ Add Row</button></div>
+        <p class="muted" style="font-size:11px;margin-bottom:8px">&#128712; <strong>HR Cost (CTC)</strong> auto-populates from Odoo <code>skill.master</code> based on Skill + Seniority. Pre-sales can override per row (shown in amber).</p>
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Skill / Role</th>
+              <th>Seniority</th>
+              <th>Wave</th>
+              <th class="num">Allocation %</th>
+              <th class="num">Duration (m)</th>
+              <th class="num">Count</th>
+              <th class="num" style="background:#eef2f7">HR Cost / Month (PKR)</th>
+              <th>Source</th>
+              <th>Location</th>
+              <th>Currency</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true">Project Manager</td><td contenteditable="true">Senior</td><td contenteditable="true">W1</td>
+              <td class="num" contenteditable="true">100</td><td class="num" contenteditable="true">6</td><td class="num" contenteditable="true">1</td>
+              <td class="num" contenteditable="true" style="background:#f0fdf4">1,250,000</td>
+              <td><span class="pill pill-ok">Odoo</span></td>
+              <td contenteditable="true">Onsite – KSA</td><td contenteditable="true">SAR</td>
+              <td><button class="btn btn-sm">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">SAP FI Consultant</td><td contenteditable="true">Senior</td><td contenteditable="true">W1</td>
+              <td class="num" contenteditable="true">100</td><td class="num" contenteditable="true">6</td><td class="num" contenteditable="true">2</td>
+              <td class="num" contenteditable="true" style="background:#f0fdf4">980,000</td>
+              <td><span class="pill pill-ok">Odoo</span></td>
+              <td contenteditable="true">Onsite – KSA</td><td contenteditable="true">SAR</td>
+              <td><button class="btn btn-sm">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">SAP MM Consultant</td><td contenteditable="true">Mid</td><td contenteditable="true">W1</td>
+              <td class="num" contenteditable="true">100</td><td class="num" contenteditable="true">4</td><td class="num" contenteditable="true">2</td>
+              <td class="num" contenteditable="true" style="background:#fef3c7">650,000</td>
+              <td><span class="pill pill-warn">Override</span></td>
+              <td contenteditable="true">Offshore – PK</td><td contenteditable="true">PKR</td>
+              <td><button class="btn btn-sm">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">ABAP Developer</td><td contenteditable="true">Mid</td><td contenteditable="true">W2</td>
+              <td class="num" contenteditable="true">60</td><td class="num" contenteditable="true">3</td><td class="num" contenteditable="true">3</td>
+              <td class="num" contenteditable="true" style="background:#f0fdf4">580,000</td>
+              <td><span class="pill pill-ok">Odoo</span></td>
+              <td contenteditable="true">Offshore – PK</td><td contenteditable="true">PKR</td>
+              <td><button class="btn btn-sm">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">Basis Administrator</td><td contenteditable="true">Senior</td><td contenteditable="true">W3</td>
+              <td class="num" contenteditable="true">50</td><td class="num" contenteditable="true">6</td><td class="num" contenteditable="true">1</td>
+              <td class="num" contenteditable="true" style="background:#f0fdf4">1,395,000</td>
+              <td><span class="pill pill-ok">Odoo</span></td>
+              <td contenteditable="true">Offshore – PK</td><td contenteditable="true">PKR</td>
+              <td><button class="btn btn-sm">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px">
+          <span><span class="pill pill-ok">Odoo</span> = default from skill.master (auto-fetched on Skill + Seniority change)</span>
+          <span><span class="pill pill-warn">Override</span> = pre-sales typed a custom salary (logged in audit)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">4 · Travel (Component-Based, Not Lump Sum) &mdash; All fields editable</div>
+        <p class="muted" style="font-size:11px;margin-bottom:10px">&#128712; Defaults from Odoo <code>travel.policy</code>. Click any amount to override for this quote. Totals recalc automatically.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+          <!-- LOCAL TRAVEL -->
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong style="color:var(--brand)">Local Travel (per trip)</strong>
+              <span class="pill pill-ok">Odoo default</span>
+            </div>
+            <table class="grid" style="margin-top:10px;font-size:12px" id="localTravelTable">
+              <thead><tr><th>Component</th><th class="num">Amount (PKR)</th><th>Basis</th></tr></thead>
+              <tbody>
+                <tr><td>TADA (per diem)</td><td class="num" contenteditable="true" style="background:#f0fdf4">75,000</td><td><small class="muted">10 days × 7,500</small></td></tr>
+                <tr><td>Flights (return)</td><td class="num" contenteditable="true" style="background:#f0fdf4">100,000</td><td><small class="muted">Economy</small></td></tr>
+                <tr><td>Accommodation</td><td class="num" contenteditable="true" style="background:#f0fdf4">300,000</td><td><small class="muted">10 nights × 30k</small></td></tr>
+                <tr><td>Local Transport</td><td class="num" contenteditable="true" style="background:#f0fdf4">22,000</td><td><small class="muted">Uber/taxi</small></td></tr>
+                <tr><td contenteditable="true" style="background:#fef3c7">+ Add component</td><td class="num" contenteditable="true" style="background:#fef3c7">0</td><td><small class="muted">Custom</small></td></tr>
+              </tbody>
+              <tfoot>
+                <tr style="background:var(--brand);color:#fff"><td style="font-weight:700">Total per trip</td><td class="num" style="font-weight:700" id="localTotal">497,000</td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- INTL TRAVEL -->
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong style="color:var(--brand)">International Travel (per trip)</strong>
+              <span class="pill pill-ok">Odoo default</span>
+            </div>
+            <table class="grid" style="margin-top:10px;font-size:12px" id="intlTravelTable">
+              <thead><tr><th>Component</th><th class="num">Amount (PKR)</th><th>Basis</th></tr></thead>
+              <tbody>
+                <tr><td>TADA (per diem)</td><td class="num" contenteditable="true" style="background:#f0fdf4">900,000</td><td><small class="muted">15 days × USD 120 × 282</small></td></tr>
+                <tr><td>Flights (return)</td><td class="num" contenteditable="true" style="background:#f0fdf4">300,000</td><td><small class="muted">Economy intl</small></td></tr>
+                <tr><td>Visa</td><td class="num" contenteditable="true" style="background:#f0fdf4">80,000</td><td><small class="muted">KSA Business</small></td></tr>
+                <tr><td>Accommodation</td><td class="num" contenteditable="true" style="background:#f0fdf4">720,000</td><td><small class="muted">15 nights × USD 170</small></td></tr>
+                <tr><td>Local Transport</td><td class="num" contenteditable="true" style="background:#f0fdf4">100,000</td><td><small class="muted">In-country</small></td></tr>
+                <tr><td contenteditable="true" style="background:#fef3c7">+ Add component</td><td class="num" contenteditable="true" style="background:#fef3c7">0</td><td><small class="muted">Custom</small></td></tr>
+              </tbody>
+              <tfoot>
+                <tr style="background:var(--brand);color:#fff"><td style="font-weight:700">Total per trip</td><td class="num" style="font-weight:700" id="intlTotal">2,100,000</td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Trip counts -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--brand)">No. of Local Trips</label>
+            <input type="number" value="4" id="localTripCount" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px" oninput="recalcTravel()">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--brand)">No. of International Trips</label>
+            <input type="number" value="2" id="intlTripCount" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:4px;margin-top:4px" oninput="recalcTravel()">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--brand)">Grand Travel Total (PKR)</label>
+            <div id="grandTravelTotal" style="padding:7px;background:var(--brand);color:#fff;border-radius:4px;margin-top:4px;font-weight:700;text-align:center">6,188,000</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Live travel recalculation
+        function parseNum(el) {
+          return parseFloat(String(el.textContent || el.innerText || '0').replace(/[^0-9.-]/g,'')) || 0;
+        }
+        function fmt(n) { return n.toLocaleString('en-US'); }
+        function recalcTravel() {
+          const locRows = document.querySelectorAll('#localTravelTable tbody tr td.num');
+          let locSum = 0;
+          locRows.forEach(td => locSum += parseNum(td));
+          const intlRows = document.querySelectorAll('#intlTravelTable tbody tr td.num');
+          let intlSum = 0;
+          intlRows.forEach(td => intlSum += parseNum(td));
+          document.getElementById('localTotal').textContent = fmt(locSum);
+          document.getElementById('intlTotal').textContent = fmt(intlSum);
+          const locCount = parseFloat(document.getElementById('localTripCount').value) || 0;
+          const intlCount = parseFloat(document.getElementById('intlTripCount').value) || 0;
+          document.getElementById('grandTravelTotal').textContent = fmt(locSum * locCount + intlSum * intlCount);
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('#localTravelTable td.num, #intlTravelTable td.num').forEach(td => {
+            td.addEventListener('input', recalcTravel);
+            td.addEventListener('blur', recalcTravel);
+          });
+          recalcTravel();
+        });
+      </script>
+
+      <div class="card">
+        <div class="card-title">5 · Direct Costs (Software, Licenses, Infra) &mdash; All cells editable</div>
+        <p class="muted" style="font-size:11px;margin-bottom:8px">&#128712; Totals &amp; grand total recalc on any change.</p>
+        <table class="grid" id="directCostsTable">
+          <thead>
+            <tr><th>Item</th><th>Category</th><th class="num">Qty</th><th class="num">Unit Cost (PKR)</th><th class="num">Total</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr><td contenteditable="true">SAP S/4HANA Cloud Test Env</td><td contenteditable="true">License</td><td class="num dc-qty" contenteditable="true">1</td><td class="num dc-unit" contenteditable="true" style="background:#f0fdf4">850,000</td><td class="num dc-total" style="background:#f8fafc;font-weight:600">850,000</td><td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcDirect()">&times;</button></td></tr>
+            <tr><td contenteditable="true">BTP Integration Suite</td><td contenteditable="true">License</td><td class="num dc-qty" contenteditable="true">1</td><td class="num dc-unit" contenteditable="true" style="background:#f0fdf4">420,000</td><td class="num dc-total" style="background:#f8fafc;font-weight:600">420,000</td><td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcDirect()">&times;</button></td></tr>
+            <tr><td contenteditable="true">Training Material Printing</td><td contenteditable="true">Other</td><td class="num dc-qty" contenteditable="true">1</td><td class="num dc-unit" contenteditable="true" style="background:#f0fdf4">120,000</td><td class="num dc-total" style="background:#f8fafc;font-weight:600">120,000</td><td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcDirect()">&times;</button></td></tr>
+          </tbody>
+          <tfoot>
+            <tr style="background:var(--brand);color:#fff"><td colspan="4" style="text-align:right;font-weight:700">GRAND TOTAL</td><td class="num" id="dcGrand" style="font-weight:700">1,390,000</td><td></td></tr>
+          </tfoot>
+        </table>
+        <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="addDirectRow()">+ Add Direct Cost</button>
+      </div>
+
+      <script>
+        function dcParseNum(el) { return parseFloat(String(el.textContent || el.innerText || '0').replace(/[^0-9.-]/g,'')) || 0; }
+        function dcFmt(n) { return Math.round(n).toLocaleString('en-US'); }
+        function recalcDirect() {
+          let grand = 0;
+          document.querySelectorAll('#directCostsTable tbody tr').forEach(tr => {
+            const q = dcParseNum(tr.querySelector('td.dc-qty'));
+            const u = dcParseNum(tr.querySelector('td.dc-unit'));
+            const t = q * u;
+            const tc = tr.querySelector('td.dc-total');
+            if (tc) tc.textContent = dcFmt(t);
+            grand += t;
+          });
+          document.getElementById('dcGrand').textContent = dcFmt(grand);
+        }
+        function addDirectRow() {
+          const tbody = document.querySelector('#directCostsTable tbody');
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td contenteditable="true">New Item</td><td contenteditable="true">Other</td>
+            <td class="num dc-qty" contenteditable="true">1</td>
+            <td class="num dc-unit" contenteditable="true" style="background:#f0fdf4">0</td>
+            <td class="num dc-total" style="background:#f8fafc;font-weight:600">0</td>
+            <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcDirect()">&times;</button></td>`;
+          tbody.appendChild(tr);
+          wireDirect();
+          recalcDirect();
+        }
+        function wireDirect() {
+          document.querySelectorAll('#directCostsTable td.dc-qty, #directCostsTable td.dc-unit').forEach(td => {
+            td.addEventListener('input', recalcDirect);
+            td.addEventListener('blur', recalcDirect);
+          });
+        }
+        document.addEventListener('DOMContentLoaded', () => { wireDirect(); recalcDirect(); });
+      </script>
+    </section>
+
+    <!-- =============== QUOTE BUILDER (GRID) =============== -->
+    <section id="view-builder" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Quote Builder — Grid Workspace</div>
+          <div class="view-subtitle">SABIC · SAP S/4HANA Brownfield · Jan–Jun 2027 · Scratchpad V3</div>
+        </div>
+        <div class="actions">
+          <button class="btn">&#8635; Revert</button>
+          <button class="btn">Save Scenario</button>
+          <button class="btn btn-warn" onclick="document.querySelector('[data-view=approvals]').click()">Submit for L1 Approval &rarr;</button>
+        </div>
+      </div>
+
+      <!-- KPI bar -->
+      <div class="row" style="margin-bottom:14px">
+        <div class="card col" style="margin:0"><div class="muted" style="font-size:10px;text-transform:uppercase">Budget</div><div style="font-size:18px;font-weight:700;color:var(--brand)">PKR 45,000,000</div></div>
+        <div class="card col" style="margin:0;position:relative">
+          <div class="muted" style="font-size:10px;text-transform:uppercase">Budget Gauge</div>
+          <svg viewBox="0 0 160 80" style="width:100%;height:60px">
+            <path d="M10,70 A60,60 0 0,1 150,70" stroke="#e5e7eb" stroke-width="10" fill="none"/>
+            <path d="M10,70 A60,60 0 0,1 130,30" stroke="#10b981" stroke-width="10" fill="none"/>
+            <line x1="80" y1="70" x2="128" y2="32" stroke="var(--brand)" stroke-width="2"/>
+            <circle cx="80" cy="70" r="4" fill="var(--brand)"/>
+            <text x="80" y="60" text-anchor="middle" font-size="10" font-weight="700" fill="var(--brand)">95.5%</text>
+          </svg>
+        </div>
+        <div class="card col" style="margin:0"><div class="muted" style="font-size:10px;text-transform:uppercase">Total Cost</div><div style="font-size:18px;font-weight:700;color:var(--accent)">PKR 42,985,000</div></div>
+        <div class="card col" style="margin:0"><div class="muted" style="font-size:10px;text-transform:uppercase">Margin %</div><input type="range" min="0" max="50" value="15" style="width:100%" id="marginSlider"><div style="text-align:center;font-weight:600">15.0%</div></div>
+        <div class="card col" style="margin:0"><div class="muted" style="font-size:10px;text-transform:uppercase">Quoted Price</div><div style="font-size:18px;font-weight:700;color:var(--brand-light)">PKR 50,570,000</div></div>
+        <div class="card col" style="margin:0"><div class="muted" style="font-size:10px;text-transform:uppercase">Commission</div><div style="font-size:18px;font-weight:700;color:var(--warn)">PKR 2,528,500</div></div>
+      </div>
+
+      <!-- Wave tabs -->
+      <div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:0">
+        <div style="padding:8px 16px;border-bottom:3px solid var(--accent);font-weight:600;color:var(--brand);cursor:pointer">Wave 1 · Discovery</div>
+        <div style="padding:8px 16px;cursor:pointer;color:var(--muted)">Wave 2 · Build</div>
+        <div style="padding:8px 16px;cursor:pointer;color:var(--muted)">Wave 3 · Deploy</div>
+        <div style="padding:8px 16px;cursor:pointer;color:var(--muted)">Wave 4 · Hypercare</div>
+      </div>
+
+      <!-- Resource grid -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)">
+          &#128712; All cells editable. <strong>Allocation %</strong> (0-100) drives monthly cost. <strong>HR Cost (CTC)</strong> is the monthly salary &mdash; default from Odoo, green tint = editable. Row totals &amp; grand totals recalculate live.
+        </div>
+        <div style="overflow-x:auto">
+          <table class="grid" id="resourceGrid" style="min-width:900px">
+            <thead>
+              <tr>
+                <th>Resource</th><th>Seniority</th><th>Location</th>
+                <th class="num">Jan'27</th><th class="num">Feb'27</th><th class="num">Mar'27</th>
+                <th class="num">Apr'27</th><th class="num">May'27</th><th class="num">Jun'27</th>
+                <th class="num" style="background:#eef2f7">HR Cost / Month (PKR)</th><th class="num">Row Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td contenteditable="true">Project Manager</td><td contenteditable="true">Senior</td><td contenteditable="true">Onsite</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">1,250,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">8,625,000</td></tr>
+              <tr><td contenteditable="true">SAP FI Sr #1</td><td contenteditable="true">Senior</td><td contenteditable="true">Onsite</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">980,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">6,762,000</td></tr>
+              <tr><td contenteditable="true">SAP FI Sr #2</td><td contenteditable="true">Senior</td><td contenteditable="true">Onsite</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">980,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">6,762,000</td></tr>
+              <tr><td contenteditable="true">SAP MM Mid #1</td><td contenteditable="true">Mid</td><td contenteditable="true">Offshore</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">0</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">620,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">2,852,000</td></tr>
+              <tr><td contenteditable="true">SAP MM Mid #2</td><td contenteditable="true">Mid</td><td contenteditable="true">Offshore</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">100</td>
+                <td class="num grid-alloc" contenteditable="true">100</td><td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">0</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">620,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">2,852,000</td></tr>
+              <tr><td contenteditable="true">ABAP Dev #1</td><td contenteditable="true">Mid</td><td contenteditable="true">Offshore</td>
+                <td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">60</td>
+                <td class="num grid-alloc" contenteditable="true">60</td><td class="num grid-alloc" contenteditable="true">60</td><td class="num grid-alloc" contenteditable="true">0</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">580,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">1,044,000</td></tr>
+              <tr><td contenteditable="true">ABAP Dev #2</td><td contenteditable="true">Mid</td><td contenteditable="true">Offshore</td>
+                <td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">0</td><td class="num grid-alloc" contenteditable="true">60</td>
+                <td class="num grid-alloc" contenteditable="true">60</td><td class="num grid-alloc" contenteditable="true">60</td><td class="num grid-alloc" contenteditable="true">0</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">580,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">1,044,000</td></tr>
+              <tr><td contenteditable="true">Basis Admin</td><td contenteditable="true">Senior</td><td contenteditable="true">Offshore</td>
+                <td class="num grid-alloc" contenteditable="true">50</td><td class="num grid-alloc" contenteditable="true">50</td><td class="num grid-alloc" contenteditable="true">50</td>
+                <td class="num grid-alloc" contenteditable="true">50</td><td class="num grid-alloc" contenteditable="true">50</td><td class="num grid-alloc" contenteditable="true">50</td>
+                <td class="num grid-ctc" contenteditable="true" style="background:#f0fdf4">1,395,000</td><td class="num grid-total" style="background:#f8fafc;font-weight:600">4,185,000</td></tr>
+              <tr style="background:#fef3c7"><td colspan="9" style="text-align:right;font-weight:600">HR Subtotal</td><td class="num">&mdash;</td><td class="num" style="font-weight:700">PKR 35,066,950</td></tr>
+              <tr style="background:#eff6ff"><td colspan="9" style="text-align:right;font-weight:600">Direct Costs (Licenses + Other)</td><td class="num">&mdash;</td><td class="num" style="font-weight:700">PKR 1,390,000</td></tr>
+              <tr style="background:#ecfdf5"><td colspan="9" style="text-align:right;font-weight:600">Travel (2 Intl + 4 Local)</td><td class="num">&mdash;</td><td class="num" style="font-weight:700">PKR 6,528,000</td></tr>
+              <tr style="background:var(--brand);color:#fff"><td colspan="9" style="text-align:right;font-weight:700">GRAND TOTAL COST</td><td class="num">&mdash;</td><td class="num" style="font-weight:700">PKR 42,984,950</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="background:#fef3c7;border-color:#fde68a">
+        <strong style="color:#92400e">&#9888; Pre-Sales Guardrails</strong>
+        <ul style="margin:8px 0 0 20px;font-size:12px;color:#78350f">
+          <li>Gauge is in the &ldquo;healthy&rdquo; green zone (95.5% of budget used) &mdash; room for contingency.</li>
+          <li>Margin 15% &ge; minimum threshold (10%). No L3 approval required for margin deviation.</li>
+          <li>2 Senior FI onsite for 6 months is unusual. Consider rotating to 1 Senior + 1 Mid after Wave 1.</li>
+        </ul>
+      </div>
+
+      <script>
+        function gridParseNum(el) {
+          return parseFloat(String(el.textContent || el.innerText || '0').replace(/[^0-9.-]/g,'')) || 0;
+        }
+        function gridFmt(n) { return Math.round(n).toLocaleString('en-US'); }
+        function recalcGrid() {
+          let hrTotal = 0;
+          document.querySelectorAll('#resourceGrid tbody tr').forEach(tr => {
+            const allocs = tr.querySelectorAll('td.grid-alloc');
+            const ctcCell = tr.querySelector('td.grid-ctc');
+            const totalCell = tr.querySelector('td.grid-total');
+            if (!allocs.length || !ctcCell || !totalCell) return;
+            const ctc = gridParseNum(ctcCell);
+            let sumAlloc = 0;
+            allocs.forEach(a => sumAlloc += gridParseNum(a));
+            const rowTotal = ctc * (sumAlloc / 100);
+            totalCell.textContent = gridFmt(rowTotal);
+            hrTotal += rowTotal;
+          });
+          // Update HR Subtotal row (if present)
+          const subtotalRow = document.querySelector('#resourceGrid tbody tr[style*="fef3c7"] td:last-child');
+          if (subtotalRow) subtotalRow.textContent = 'PKR ' + gridFmt(hrTotal);
+          // Update Grand Total row
+          const directRow = document.querySelector('#resourceGrid tbody tr[style*="eff6ff"] td:last-child');
+          const travelRow = document.querySelector('#resourceGrid tbody tr[style*="ecfdf5"] td:last-child');
+          const grandRow = document.querySelector('#resourceGrid tbody tr[style*="var(--brand)"] td:last-child');
+          const direct = directRow ? gridParseNum(directRow) : 1390000;
+          const travel = travelRow ? gridParseNum(travelRow) : 6528000;
+          if (grandRow) grandRow.textContent = 'PKR ' + gridFmt(hrTotal + direct + travel);
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('#resourceGrid td.grid-alloc, #resourceGrid td.grid-ctc').forEach(td => {
+            td.addEventListener('input', recalcGrid);
+            td.addEventListener('blur', recalcGrid);
+          });
+          recalcGrid();
+        });
+      </script>
+    </section>
+
+    <!-- =============== TRAVEL PLANS =============== -->
+    <section id="view-travel" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Travel Plans</div>
+          <div class="view-subtitle">Every trip decomposed into TADA + Flights + Visa + Accommodation + Local &mdash; no lump-sum</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary">+ Add Trip</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Planned Trips &middot; All cells editable &middot; Totals live-recalculate</div>
+        <p class="muted" style="font-size:11px;margin-bottom:10px">&#128712; Click any trip cell to edit. Per-row total and grand totals update automatically.</p>
+        <table class="grid" id="tripsTable">
+          <thead>
+            <tr>
+              <th>Trip #</th><th>Resource</th><th>Type</th><th>From &rarr; To</th><th>Month</th><th>Days</th>
+              <th class="num">TADA</th><th class="num">Flights</th><th class="num">Visa</th>
+              <th class="num">Accom.</th><th class="num">Local</th><th class="num">Total</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true">T-001</td><td contenteditable="true">Project Manager</td><td><span class="pill pill-info">Intl</span></td>
+              <td contenteditable="true">Lahore &rarr; Riyadh</td><td contenteditable="true">Jan 2027</td><td contenteditable="true">15</td>
+              <td class="num trip-amt" contenteditable="true">900,000</td><td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">80,000</td>
+              <td class="num trip-amt" contenteditable="true">720,000</td><td class="num trip-amt" contenteditable="true">100,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">2,100,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">T-002</td><td contenteditable="true">SAP FI Sr #1</td><td><span class="pill pill-info">Intl</span></td>
+              <td contenteditable="true">Karachi &rarr; Riyadh</td><td contenteditable="true">Jan 2027</td><td contenteditable="true">15</td>
+              <td class="num trip-amt" contenteditable="true">900,000</td><td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">80,000</td>
+              <td class="num trip-amt" contenteditable="true">720,000</td><td class="num trip-amt" contenteditable="true">100,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">2,100,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">T-003</td><td contenteditable="true">SAP MM Mid #1</td><td><span class="pill pill-warn">Local</span></td>
+              <td contenteditable="true">Lahore &rarr; Karachi</td><td contenteditable="true">Feb 2027</td><td contenteditable="true">10</td>
+              <td class="num trip-amt" contenteditable="true">75,000</td><td class="num trip-amt" contenteditable="true">100,000</td><td class="num trip-amt" contenteditable="true">0</td>
+              <td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">22,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">497,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">T-004</td><td contenteditable="true">SAP MM Mid #2</td><td><span class="pill pill-warn">Local</span></td>
+              <td contenteditable="true">Lahore &rarr; Karachi</td><td contenteditable="true">Feb 2027</td><td contenteditable="true">10</td>
+              <td class="num trip-amt" contenteditable="true">75,000</td><td class="num trip-amt" contenteditable="true">100,000</td><td class="num trip-amt" contenteditable="true">0</td>
+              <td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">22,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">497,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">T-005</td><td contenteditable="true">ABAP Dev #1</td><td><span class="pill pill-warn">Local</span></td>
+              <td contenteditable="true">Islamabad &rarr; Lahore</td><td contenteditable="true">Mar 2027</td><td contenteditable="true">10</td>
+              <td class="num trip-amt" contenteditable="true">75,000</td><td class="num trip-amt" contenteditable="true">100,000</td><td class="num trip-amt" contenteditable="true">0</td>
+              <td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">22,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">497,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+            <tr>
+              <td contenteditable="true">T-006</td><td contenteditable="true">Basis Admin</td><td><span class="pill pill-warn">Local</span></td>
+              <td contenteditable="true">Islamabad &rarr; Lahore</td><td contenteditable="true">Apr 2027</td><td contenteditable="true">10</td>
+              <td class="num trip-amt" contenteditable="true">75,000</td><td class="num trip-amt" contenteditable="true">100,000</td><td class="num trip-amt" contenteditable="true">0</td>
+              <td class="num trip-amt" contenteditable="true">300,000</td><td class="num trip-amt" contenteditable="true">22,000</td>
+              <td class="num trip-total" style="font-weight:600;background:#f8fafc">497,000</td>
+              <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr style="background:var(--brand);color:#fff">
+              <td colspan="6" style="text-align:right;font-weight:700">TOTAL</td>
+              <td class="num" id="sumTada">2,100,000</td><td class="num" id="sumFlights">1,000,000</td><td class="num" id="sumVisa">160,000</td>
+              <td class="num" id="sumAccom">2,640,000</td><td class="num" id="sumLocal">288,000</td>
+              <td class="num" id="sumGrand" style="font-weight:700">6,188,000</td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="addTripRow()">+ Add Trip</button>
+      </div>
+
+      <script>
+        function tripParseNum(el) {
+          return parseFloat(String(el.textContent || el.innerText || '0').replace(/[^0-9.-]/g,'')) || 0;
+        }
+        function tripFmt(n) { return n.toLocaleString('en-US'); }
+        function recalcTrips() {
+          let sumTada = 0, sumFlights = 0, sumVisa = 0, sumAccom = 0, sumLocal = 0, grand = 0;
+          document.querySelectorAll('#tripsTable tbody tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td.trip-amt');
+            if (cells.length < 5) return;
+            const tada = tripParseNum(cells[0]);
+            const flights = tripParseNum(cells[1]);
+            const visa = tripParseNum(cells[2]);
+            const accom = tripParseNum(cells[3]);
+            const local = tripParseNum(cells[4]);
+            const rowTotal = tada + flights + visa + accom + local;
+            const totalCell = tr.querySelector('td.trip-total');
+            if (totalCell) totalCell.textContent = tripFmt(rowTotal);
+            sumTada += tada; sumFlights += flights; sumVisa += visa; sumAccom += accom; sumLocal += local; grand += rowTotal;
+          });
+          document.getElementById('sumTada').textContent = tripFmt(sumTada);
+          document.getElementById('sumFlights').textContent = tripFmt(sumFlights);
+          document.getElementById('sumVisa').textContent = tripFmt(sumVisa);
+          document.getElementById('sumAccom').textContent = tripFmt(sumAccom);
+          document.getElementById('sumLocal').textContent = tripFmt(sumLocal);
+          document.getElementById('sumGrand').textContent = tripFmt(grand);
+        }
+        function addTripRow() {
+          const tbody = document.querySelector('#tripsTable tbody');
+          const rowCount = tbody.querySelectorAll('tr').length + 1;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td contenteditable="true">T-${String(rowCount).padStart(3,'0')}</td>
+            <td contenteditable="true">New Resource</td><td><span class="pill pill-warn">Local</span></td>
+            <td contenteditable="true">Origin &rarr; Dest</td><td contenteditable="true">Month</td><td contenteditable="true">0</td>
+            <td class="num trip-amt" contenteditable="true">0</td><td class="num trip-amt" contenteditable="true">0</td><td class="num trip-amt" contenteditable="true">0</td>
+            <td class="num trip-amt" contenteditable="true">0</td><td class="num trip-amt" contenteditable="true">0</td>
+            <td class="num trip-total" style="font-weight:600;background:#f8fafc">0</td>
+            <td><button class="btn btn-sm" onclick="this.closest('tr').remove();recalcTrips()">&times;</button></td>`;
+          tbody.appendChild(tr);
+          wireTrips();
+          recalcTrips();
+        }
+        function wireTrips() {
+          document.querySelectorAll('#tripsTable td.trip-amt').forEach(td => {
+            td.addEventListener('input', recalcTrips);
+            td.addEventListener('blur', recalcTrips);
+          });
+        }
+        document.addEventListener('DOMContentLoaded', () => { wireTrips(); recalcTrips(); });
+      </script>
+
+      <div class="row">
+        <div class="card col">
+          <div class="card-title">Travel Policy Reference (from Odoo)</div>
+          <table class="grid" style="font-size:11px">
+            <tr><td>TADA (International / day)</td><td class="num">USD 120</td></tr>
+            <tr><td>TADA (Local / day)</td><td class="num">PKR 7,500</td></tr>
+            <tr><td>Flight Class (Intl)</td><td>Economy</td></tr>
+            <tr><td>Accommodation Band (Intl)</td><td>USD 170/night</td></tr>
+            <tr><td>Visa (KSA Business)</td><td class="num">USD 285</td></tr>
+          </table>
+        </div>
+        <div class="card col">
+          <div class="card-title">Trip Economics</div>
+          <div style="font-size:12px;line-height:1.7">
+            &#x25CF; 2 international trips (Wave 1 kickoff)<br>
+            &#x25CF; 4 local trips (cross-city coordination)<br>
+            &#x25CF; Travel = <strong>15.2%</strong> of total cost<br>
+            &#x25CF; Auto-flag if travel &gt; 20% of cost (requires L2 approval)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== PAYMENT PLAN =============== -->
+    <section id="view-payment" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Payment Plan &amp; Milestones</div>
+          <div class="view-subtitle">Invoice schedule by wave &middot; drives Odoo sale.order payment terms after push</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary">+ Add Milestone</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Milestone Schedule</div>
+        <table class="grid">
+          <thead>
+            <tr><th>#</th><th>Milestone</th><th>Wave</th><th>Trigger Event</th><th>Target Date</th><th class="num">%</th><th class="num">Amount (PKR)</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>M1</td><td>Contract Signing &amp; Mobilization</td><td>W1</td><td>PO received</td><td>05-Jan-2027</td><td class="num">20%</td><td class="num">10,114,000</td><td><span class="pill pill-info">Planned</span></td></tr>
+            <tr><td>M2</td><td>Blueprint Sign-off</td><td>W1</td><td>Design doc approved</td><td>28-Feb-2027</td><td class="num">20%</td><td class="num">10,114,000</td><td><span class="pill pill-info">Planned</span></td></tr>
+            <tr><td>M3</td><td>Build Complete &amp; UAT Entry</td><td>W2</td><td>UAT kickoff</td><td>30-Apr-2027</td><td class="num">25%</td><td class="num">12,642,500</td><td><span class="pill pill-info">Planned</span></td></tr>
+            <tr><td>M4</td><td>Go-Live</td><td>W3</td><td>Prod cutover</td><td>31-May-2027</td><td class="num">25%</td><td class="num">12,642,500</td><td><span class="pill pill-info">Planned</span></td></tr>
+            <tr><td>M5</td><td>Hypercare Exit</td><td>W4</td><td>30 days post go-live</td><td>30-Jun-2027</td><td class="num">10%</td><td class="num">5,057,000</td><td><span class="pill pill-info">Planned</span></td></tr>
+            <tr style="background:var(--brand);color:#fff"><td colspan="5" style="text-align:right;font-weight:700">TOTAL</td><td class="num" style="font-weight:700">100%</td><td class="num" style="font-weight:700">50,570,000</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="row">
+        <div class="card col">
+          <div class="card-title">Cash-Flow Curve</div>
+          <svg viewBox="0 0 400 140" style="width:100%;height:140px">
+            <line x1="30" y1="110" x2="390" y2="110" stroke="#cbd5e1"/>
+            <line x1="30" y1="110" x2="30" y2="10" stroke="#cbd5e1"/>
+            <polyline points="40,100 100,82 180,58 260,32 330,16 370,6"
+              stroke="var(--accent)" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="100" r="4" fill="var(--accent)"/>
+            <circle cx="100" cy="82" r="4" fill="var(--accent)"/>
+            <circle cx="180" cy="58" r="4" fill="var(--accent)"/>
+            <circle cx="260" cy="32" r="4" fill="var(--accent)"/>
+            <circle cx="330" cy="16" r="4" fill="var(--accent)"/>
+            <circle cx="370" cy="6" r="4" fill="var(--accent)"/>
+            <text x="40" y="128" font-size="9" text-anchor="middle">Jan</text>
+            <text x="100" y="128" font-size="9" text-anchor="middle">Feb</text>
+            <text x="180" y="128" font-size="9" text-anchor="middle">Mar</text>
+            <text x="260" y="128" font-size="9" text-anchor="middle">Apr</text>
+            <text x="330" y="128" font-size="9" text-anchor="middle">May</text>
+            <text x="370" y="128" font-size="9" text-anchor="middle">Jun</text>
+          </svg>
+          <div class="muted" style="font-size:11px;text-align:center">Cumulative invoiced revenue</div>
+        </div>
+        <div class="card col">
+          <div class="card-title">Payment Terms</div>
+          <table class="grid" style="font-size:12px">
+            <tr><td>Net Terms</td><td>Net 30 from invoice date</td></tr>
+            <tr><td>Currency</td><td>PKR (invoicing) &middot; USD optional for SABIC</td></tr>
+            <tr><td>Late Payment Penalty</td><td>1.5% / month</td></tr>
+            <tr><td>Early Payment Discount</td><td>1% if paid within 10 days</td></tr>
+            <tr><td>Advance Payment</td><td>20% at mobilization (M1)</td></tr>
+            <tr><td>Retention</td><td>10% released post Hypercare (M5)</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== SCENARIOS =============== -->
+    <section id="view-scenarios" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Scenarios — Side by Side</div>
+          <div class="view-subtitle">Compare up to 3 &ldquo;what-ifs&rdquo; before committing · replaces Excel-tab duplication</div>
+        </div>
+        <div class="actions">
+          <button class="btn">+ Clone Current</button>
+          <button class="btn btn-primary">Commit Selected &rarr; Main</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:220px repeat(3,1fr);gap:0;background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        <!-- Header row -->
+        <div style="padding:12px;background:#f8fafc;border-right:1px solid var(--border);border-bottom:1px solid var(--border)"></div>
+        <div style="padding:12px;background:#f8fafc;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">
+          <strong>Scenario A</strong><br><small class="muted">Baseline · 6m · 12 res</small>
+          <div style="margin-top:4px"><span class="pill pill-info">Selected</span></div>
+        </div>
+        <div style="padding:12px;background:#f8fafc;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">
+          <strong>Scenario B</strong><br><small class="muted">Lean · offshore-heavy</small>
+        </div>
+        <div style="padding:12px;background:#f8fafc;border-bottom:1px solid var(--border);text-align:center">
+          <strong>Scenario C</strong><br><small class="muted">Aggressive · 4m compressed</small>
+        </div>
+
+        <!-- Rows -->
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Duration</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">6 months</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">6 months</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center">4 months</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Resources</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">12</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:#fef3c7">9 <small class="muted">(-3)</small></div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;background:#fef3c7">15 <small class="muted">(+3)</small></div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Onsite FTE-months</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">18</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:#fef3c7">8 <small class="muted">(-10)</small></div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;background:#fef3c7">24 <small class="muted">(+6)</small></div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">HR Cost</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">35.1M</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:#d1fae5">27.4M</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;background:#fee2e2">40.8M</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Travel Cost</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">6.5M</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:#d1fae5">3.1M</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center">6.5M</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Direct Cost</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">1.4M</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">1.4M</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center">1.4M</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Total Cost</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;font-weight:600">42.99M</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;font-weight:600;background:#d1fae5">31.9M</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;background:#fee2e2">48.7M</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Budget % Used</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">95.5%</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:#d1fae5">70.9%</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;background:#fee2e2">108.3% &#9888;</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Margin %</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">15%</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center">15%</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center">15%</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Quoted Price</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;font-weight:700;color:var(--brand)">50.57M</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;font-weight:700;color:var(--accent)">37.55M</div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center;font-weight:700;color:var(--danger)">57.30M</div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600">Risk Level</div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center"><span class="pill pill-ok">Low</span></div>
+        <div style="padding:10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center"><span class="pill pill-warn">Medium</span></div>
+        <div style="padding:10px;border-bottom:1px solid var(--border);text-align:center"><span class="pill pill-err">High</span></div>
+
+        <div style="padding:10px;border-right:1px solid var(--border);font-weight:600">Action</div>
+        <div style="padding:10px;border-right:1px solid var(--border);text-align:center"><button class="btn btn-sm btn-primary">Select</button></div>
+        <div style="padding:10px;border-right:1px solid var(--border);text-align:center"><button class="btn btn-sm">Select</button></div>
+        <div style="padding:10px;text-align:center"><button class="btn btn-sm">Select</button></div>
+      </div>
+
+      <div class="card" style="background:#eef2f7;border-color:#cbd5e1;margin-top:16px">
+        <strong style="color:var(--brand)">&#128161; AI Assessment</strong>
+        <p style="margin-top:6px;font-size:12px">Scenario A (baseline) is the recommended submission. Scenario B sacrifices onsite presence which SABIC typically requires for Wave 1 blueprint signing — likely to be rejected by customer. Scenario C exceeds the customer's stated budget — requires L3 pricing committee approval before submission.</p>
+      </div>
+    </section>
+
+    <!-- =============== APPROVALS =============== -->
+    <section id="view-approvals" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Approval Workflow</div>
+          <div class="view-subtitle">All approvals happen <strong>inside the web app</strong> &mdash; Odoo only sees the final approved snapshot</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Download Approval Log</button>
+          <button class="btn btn-primary">Approve as L2 &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="card">
+        <div class="card-title">Approval Pipeline</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+          <div style="flex:1;text-align:center">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700">&#10003;</div>
+            <div style="margin-top:6px;font-weight:600;font-size:12px">Scratchpad</div>
+            <div class="muted" style="font-size:10px">Safi U. · 20 Apr</div>
+          </div>
+          <div style="flex:0.5;height:3px;background:var(--accent)"></div>
+          <div style="flex:1;text-align:center">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700">&#10003;</div>
+            <div style="margin-top:6px;font-weight:600;font-size:12px">L1 · Team Lead</div>
+            <div class="muted" style="font-size:10px">Umer F. · 21 Apr</div>
+          </div>
+          <div style="flex:0.5;height:3px;background:var(--warn)"></div>
+          <div style="flex:1;text-align:center">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--warn);color:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700">&#8943;</div>
+            <div style="margin-top:6px;font-weight:600;font-size:12px;color:var(--warn)">L2 · Delivery Head</div>
+            <div class="muted" style="font-size:10px">Aisha M. · Pending</div>
+          </div>
+          <div style="flex:0.5;height:3px;background:#e5e7eb"></div>
+          <div style="flex:1;text-align:center">
+            <div style="width:44px;height:44px;border-radius:50%;background:#e5e7eb;color:#64748b;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700">3</div>
+            <div style="margin-top:6px;font-weight:600;font-size:12px;color:var(--muted)">L3 · Pricing Committee</div>
+            <div class="muted" style="font-size:10px">Bilal K. · Not started</div>
+          </div>
+          <div style="flex:0.5;height:3px;background:#e5e7eb"></div>
+          <div style="flex:1;text-align:center">
+            <div style="width:44px;height:44px;border-radius:50%;background:#e5e7eb;color:#64748b;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700">&#9733;</div>
+            <div style="margin-top:6px;font-weight:600;font-size:12px;color:var(--muted)">Approved</div>
+            <div class="muted" style="font-size:10px">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="card col">
+          <div class="card-title">Deviation Checks (Auto)</div>
+          <table class="grid" style="font-size:12px">
+            <thead><tr><th>Rule</th><th>Limit</th><th>Actual</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Margin &ge; 10%</td><td>10%</td><td>15%</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>Budget Used &le; 100%</td><td>100%</td><td>95.5%</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>Travel &le; 20% of cost</td><td>20%</td><td>15.2%</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>Senior Ratio &le; 50%</td><td>50%</td><td>42%</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>Onsite FTE-m &le; 25</td><td>25</td><td>18</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>CTC Factor matches Policy</td><td>1.15</td><td>1.15</td><td><span class="pill pill-ok">Pass</span></td></tr>
+              <tr><td>All Resources Skill-Mastered</td><td>100%</td><td>100%</td><td><span class="pill pill-ok">Pass</span></td></tr>
+            </tbody>
+          </table>
+          <div class="muted" style="font-size:11px;margin-top:8px">&#128712; If any rule fails, the quote is auto-escalated to L3 (Pricing Committee).</div>
+        </div>
+
+        <div class="card col">
+          <div class="card-title">Approval Thread</div>
+          <div style="max-height:320px;overflow-y:auto">
+            <div style="border-left:3px solid var(--accent);padding:8px 12px;margin-bottom:10px;background:#f8fafc">
+              <strong style="font-size:12px">Safi U.</strong> <span class="muted" style="font-size:10px">&middot; 20 Apr, 14:32 &middot; Scratchpad</span>
+              <p style="margin-top:4px;font-size:12px">Submitted V3. Adjusted ABAP allocation to 60% for Wave 2 per Umer&apos;s guidance.</p>
+            </div>
+            <div style="border-left:3px solid var(--accent);padding:8px 12px;margin-bottom:10px;background:#f8fafc">
+              <strong style="font-size:12px">Umer F. (L1)</strong> <span class="muted" style="font-size:10px">&middot; 21 Apr, 09:18 &middot; Approved</span>
+              <p style="margin-top:4px;font-size:12px">Resource mix looks right. Blueprint assumptions are reasonable. Passing to L2.</p>
+            </div>
+            <div style="border-left:3px solid var(--warn);padding:8px 12px;margin-bottom:10px;background:#fffbeb">
+              <strong style="font-size:12px">Aisha M. (L2)</strong> <span class="muted" style="font-size:10px">&middot; 22 Apr, 11:04 &middot; Comment</span>
+              <p style="margin-top:4px;font-size:12px">Why 2 Senior FI for 6 months? Onsite cost is ~PKR 13.5M for FI alone. Can we rotate 1 Sr + 1 Mid from Wave 2 onwards?</p>
+            </div>
+            <div style="border-left:3px solid #cbd5e1;padding:8px 12px;margin-bottom:10px;background:#f8fafc">
+              <strong style="font-size:12px">Safi U.</strong> <span class="muted" style="font-size:10px">&middot; 22 Apr, 11:40 &middot; Reply</span>
+              <p style="margin-top:4px;font-size:12px">SABIC blueprint governance requires 2 Sr FI during sign-off. Will clone Scenario B as alternative with rotation &mdash; attached now.</p>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px">
+            <input type="text" placeholder="Add comment..." style="flex:1;padding:7px;border:1px solid var(--border);border-radius:4px">
+            <button class="btn btn-primary">Post</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px">
+            <button class="btn" style="flex:1">Request Changes</button>
+            <button class="btn btn-primary" style="flex:1">Approve as L2</button>
+            <button class="btn btn-warn" style="flex:1">Reject</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#fef3c7;border-color:#fde68a">
+        <strong style="color:#92400e">&#9888; Approval happens in the web app (not Odoo)</strong>
+        <p style="margin:6px 0 0 0;font-size:12px;color:#78350f">
+          L1/L2/L3 sign-offs, comments, deviation logs, version diffs &mdash; all captured here. Odoo receives <strong>only the final approved payload</strong> when &ldquo;Push to Odoo&rdquo; is clicked. This keeps pre-sales iteration fast without cluttering Odoo with scratchpad data.
+        </p>
+      </div>
+    </section>
+
+    <!-- =============== VERSIONS =============== -->
+    <section id="view-versions" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Version Timeline</div>
+          <div class="view-subtitle">Every save creates an immutable snapshot &mdash; diff, revert, or branch any version</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Compare Selected</button>
+          <button class="btn btn-primary">+ New Version</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;font-weight:600;color:var(--brand)">Scratchpad Versions</div>
+
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center;background:#fffbeb">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">V3</div>
+          <div style="flex:1">
+            <strong>V3 · Current Scratchpad</strong> <span class="pill pill-warn">Live</span><br>
+            <span class="muted" style="font-size:11px">Safi U. &middot; 22 Apr 2026, 11:40 &middot; Reduced ABAP allocation to 60%, added Wave 2 dependency notes</span>
+          </div>
+          <div style="text-align:right;font-size:12px">Cost: <strong>42.99M</strong><br>Price: <strong>50.57M</strong></div>
+          <button class="btn btn-sm">Diff</button>
+        </div>
+
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:#cbd5e1;color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">V2</div>
+          <div style="flex:1">
+            <strong>V2</strong><br>
+            <span class="muted" style="font-size:11px">Safi U. &middot; 21 Apr 2026, 16:20 &middot; Added Basis Admin (50%), corrected Mid CTC from 580k to 620k</span>
+          </div>
+          <div style="text-align:right;font-size:12px">Cost: <strong>43.81M</strong><br>Price: <strong>51.54M</strong></div>
+          <button class="btn btn-sm">Diff</button>
+          <button class="btn btn-sm">Restore</button>
+        </div>
+
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:#cbd5e1;color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">V1</div>
+          <div style="flex:1">
+            <strong>V1 · Initial</strong><br>
+            <span class="muted" style="font-size:11px">Safi U. &middot; 20 Apr 2026, 14:32 &middot; Seed from form-entry (12 resources, 6-month plan)</span>
+          </div>
+          <div style="text-align:right;font-size:12px">Cost: <strong>44.25M</strong><br>Price: <strong>52.06M</strong></div>
+          <button class="btn btn-sm">Diff</button>
+          <button class="btn btn-sm">Restore</button>
+        </div>
+
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:#f8fafc;font-weight:600;color:var(--brand)">Approved Versions</div>
+
+        <div style="padding:14px 16px;display:flex;gap:14px;align-items:center;background:#ecfdf5">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">V0</div>
+          <div style="flex:1">
+            <strong>V0 &mdash; &mdash;</strong> <span class="muted">(none yet)</span><br>
+            <span class="muted" style="font-size:11px">Will populate after L3 approval &amp; push to Odoo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">V2 &rarr; V3 Diff</div>
+        <table class="grid" style="font-size:12px">
+          <thead><tr><th>Field</th><th>V2</th><th>V3</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>ABAP Dev #1 / Mar'27</td><td class="num">100%</td><td class="num">60%</td><td><span class="pill pill-warn">-40%</span></td></tr>
+            <tr><td>ABAP Dev #1 / Apr'27</td><td class="num">100%</td><td class="num">60%</td><td><span class="pill pill-warn">-40%</span></td></tr>
+            <tr><td>ABAP Dev #2 / Mar'27</td><td class="num">100%</td><td class="num">60%</td><td><span class="pill pill-warn">-40%</span></td></tr>
+            <tr><td>ABAP Dev #2 / Apr'27</td><td class="num">100%</td><td class="num">60%</td><td><span class="pill pill-warn">-40%</span></td></tr>
+            <tr><td>HR Subtotal</td><td class="num">35.89M</td><td class="num">35.07M</td><td><span class="pill pill-ok">-820K</span></td></tr>
+            <tr><td>Total Cost</td><td class="num">43.81M</td><td class="num">42.99M</td><td><span class="pill pill-ok">-820K</span></td></tr>
+            <tr><td>Quoted Price</td><td class="num">51.54M</td><td class="num">50.57M</td><td><span class="pill pill-ok">-970K</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =============== PUSH TO ODOO =============== -->
+    <section id="view-push" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Push to Odoo &mdash; Final Gate</div>
+          <div class="view-subtitle">Only the approved, locked payload crosses into Odoo production</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Preview Payload</button>
+          <button class="btn btn-primary" style="font-size:13px;padding:8px 18px">&#10003; Push to Odoo &amp; Create Sale Order</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="card col" style="flex:1.2">
+          <div class="card-title">Approved Payload Summary</div>
+          <table class="grid" style="font-size:12px">
+            <tr><td style="width:40%">Quote ID (web)</td><td>Q/2026/0042</td></tr>
+            <tr><td>Customer</td><td>SABIC (Odoo res.partner #2847)</td></tr>
+            <tr><td>Opportunity</td><td>CRM Lead #812 &mdash; SABIC S/4HANA Brownfield</td></tr>
+            <tr><td>Project Name</td><td>SAP S/4HANA Brownfield Migration</td></tr>
+            <tr><td>Duration</td><td>6 months (Jan &ndash; Jun 2027)</td></tr>
+            <tr><td>Total Cost</td><td><strong>PKR 42,984,950</strong></td></tr>
+            <tr><td>Margin</td><td><strong>15.0%</strong></td></tr>
+            <tr><td>Quoted Price</td><td><strong>PKR 50,570,000</strong></td></tr>
+            <tr><td>Approved By</td><td>L1 Umer F. &middot; L2 Aisha M. &middot; L3 Bilal K.</td></tr>
+            <tr><td>Approval Date</td><td>22 Apr 2026, 16:45</td></tr>
+            <tr><td>Version Pushed</td><td>V3 (final)</td></tr>
+          </table>
+        </div>
+
+        <div class="card col">
+          <div class="card-title">Odoo Target Tables</div>
+          <table class="grid" style="font-size:11px">
+            <thead><tr><th>Odoo Model</th><th>Records</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>sale.order</td><td class="num">1</td><td>INSERT (draft)</td></tr>
+              <tr><td>sale.order.line</td><td class="num">12</td><td>INSERT (resource lines)</td></tr>
+              <tr><td>sale.order.line</td><td class="num">3</td><td>INSERT (direct cost lines)</td></tr>
+              <tr><td>sale.order.line</td><td class="num">6</td><td>INSERT (travel components)</td></tr>
+              <tr><td>project.costing</td><td class="num">1</td><td>INSERT (budget header)</td></tr>
+              <tr><td>project.costing.line</td><td class="num">12</td><td>INSERT (cost breakdown)</td></tr>
+              <tr><td>quotation.builder.header</td><td class="num">1</td><td>INSERT (snapshot)</td></tr>
+              <tr><td>quotation.builder.wave</td><td class="num">4</td><td>INSERT</td></tr>
+              <tr><td>quotation.builder.resource</td><td class="num">12</td><td>INSERT</td></tr>
+              <tr><td>travel.plan</td><td class="num">1</td><td>INSERT</td></tr>
+              <tr><td>travel.plan.trip</td><td class="num">6</td><td>INSERT</td></tr>
+              <tr><td>payment.milestone</td><td class="num">5</td><td>INSERT</td></tr>
+              <tr><td>mail.message (chatter)</td><td class="num">1</td><td>Audit comment</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">What Happens When You Click &ldquo;Push&rdquo;</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px">
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px;background:#f8fafc">
+            <div style="font-size:20px;color:var(--accent);font-weight:700">1</div>
+            <strong style="font-size:12px">Freeze Web App</strong>
+            <p style="font-size:11px;margin-top:4px;color:var(--muted)">Quote state &rarr; &ldquo;Pushed / Read-only&rdquo;. No further edits in web app.</p>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px;background:#f8fafc">
+            <div style="font-size:20px;color:var(--accent);font-weight:700">2</div>
+            <strong style="font-size:12px">POST to Odoo</strong>
+            <p style="font-size:11px;margin-top:4px;color:var(--muted)">Bearer-token call to <code>/api/v1/quotation/create</code> via <code>tmc_api</code>.</p>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px;background:#f8fafc">
+            <div style="font-size:20px;color:var(--accent);font-weight:700">3</div>
+            <strong style="font-size:12px">Odoo Creates SO</strong>
+            <p style="font-size:11px;margin-top:4px;color:var(--muted)">sale.order draft, lines, project.costing header, auditlog entries.</p>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;padding:12px;background:#f8fafc">
+            <div style="font-size:20px;color:var(--accent);font-weight:700">4</div>
+            <strong style="font-size:12px">Returns Odoo ID</strong>
+            <p style="font-size:11px;margin-top:4px;color:var(--muted)">Web app stores Odoo SO number &amp; URL. Link shown to pre-sales.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#ecfdf5;border-color:#6ee7b7">
+        <strong style="color:#065f46">&#10003; Post-Push Confirmation Preview</strong>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px">
+          <div style="background:#fff;padding:10px;border-radius:4px">
+            <div class="muted" style="font-size:10px;text-transform:uppercase">Odoo Sale Order</div>
+            <div style="font-weight:700;color:var(--brand);font-family:monospace">S00432</div>
+          </div>
+          <div style="background:#fff;padding:10px;border-radius:4px">
+            <div class="muted" style="font-size:10px;text-transform:uppercase">Odoo Project Costing</div>
+            <div style="font-weight:700;color:var(--brand);font-family:monospace">PC/2026/0042</div>
+          </div>
+          <div style="background:#fff;padding:10px;border-radius:4px">
+            <div class="muted" style="font-size:10px;text-transform:uppercase">Odoo URL</div>
+            <div style="font-weight:700;color:var(--brand-light)"><a href="#" style="color:inherit">odoo.tmc.com/web#id=432&model=sale.order</a></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#fef2f2;border-color:#fecaca">
+        <strong style="color:#991b1b">&#9888; Guardrails before Push is enabled</strong>
+        <ul style="margin:8px 0 0 20px;font-size:12px;color:#7f1d1d">
+          <li>L1 + L2 + L3 approvals all Green &#10003;</li>
+          <li>No deviation-flags unresolved</li>
+          <li>Customer / Opportunity linked to valid Odoo records</li>
+          <li>Currency &amp; payment terms confirmed by commercial team</li>
+          <li>Version locked (no edits in last 60 seconds)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- =============== ARCHITECTURE =============== -->
+    <section id="view-architecture" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Architecture Reference</div>
+          <div class="view-subtitle">Hybrid architecture &mdash; web app for authoring &amp; approvals, Odoo as system of record after push</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Data Flow</div>
+        <svg viewBox="0 0 800 260" style="width:100%;height:260px">
+          <!-- Web App box -->
+          <rect x="30" y="40" width="220" height="180" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+          <text x="140" y="62" text-anchor="middle" font-weight="700" fill="#1e40af" font-size="14">Web App (React/Next)</text>
+          <text x="140" y="82" text-anchor="middle" font-size="11" fill="#1e40af">All authoring</text>
+          <text x="140" y="100" text-anchor="middle" font-size="11" fill="#1e40af">All approvals L1/L2/L3</text>
+          <text x="140" y="118" text-anchor="middle" font-size="11" fill="#1e40af">All versioning</text>
+          <text x="140" y="136" text-anchor="middle" font-size="11" fill="#1e40af">All scenarios</text>
+          <text x="140" y="154" text-anchor="middle" font-size="11" fill="#1e40af">AI assistant (Phase 1)</text>
+          <text x="140" y="172" text-anchor="middle" font-size="11" fill="#1e40af">Voice interface (Phase 2)</text>
+          <text x="140" y="200" text-anchor="middle" font-size="10" fill="#1e40af" font-style="italic">PostgreSQL app DB</text>
+
+          <!-- Arrow 1: dropdowns/masters -->
+          <path d="M 250 110 L 550 110" stroke="#0a7c6b" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+          <text x="400" y="100" text-anchor="middle" font-size="10" fill="#0a7c6b">GET (dropdowns, masters, CTC)</text>
+          <text x="400" y="125" text-anchor="middle" font-size="10" fill="#0a7c6b" font-style="italic">customers, skills, CTC factors, rates</text>
+
+          <!-- Arrow 2: push final -->
+          <path d="M 250 160 L 550 160" stroke="#d97706" stroke-width="3" fill="none" marker-end="url(#arroww)"/>
+          <text x="400" y="180" text-anchor="middle" font-size="11" fill="#d97706" font-weight="700">POST on approval (one-way push)</text>
+
+          <!-- Odoo box -->
+          <rect x="550" y="40" width="220" height="180" rx="8" fill="#ecfdf5" stroke="#0a7c6b" stroke-width="2"/>
+          <text x="660" y="62" text-anchor="middle" font-weight="700" fill="#065f46" font-size="14">Odoo 18 Enterprise</text>
+          <text x="660" y="82" text-anchor="middle" font-size="11" fill="#065f46">System of record</text>
+          <text x="660" y="100" text-anchor="middle" font-size="11" fill="#065f46">sale.order + project.costing</text>
+          <text x="660" y="118" text-anchor="middle" font-size="11" fill="#065f46">Master data owner</text>
+          <text x="660" y="136" text-anchor="middle" font-size="11" fill="#065f46">Skills, CTC, Customers</text>
+          <text x="660" y="154" text-anchor="middle" font-size="11" fill="#065f46">Travel policy</text>
+          <text x="660" y="172" text-anchor="middle" font-size="11" fill="#065f46">Invoicing, HR, Finance</text>
+          <text x="660" y="200" text-anchor="middle" font-size="10" fill="#065f46" font-style="italic">tmc_api bearer-token</text>
+
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0a7c6b"/></marker>
+            <marker id="arroww" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d97706"/></marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="row">
+        <div class="card col">
+          <div class="card-title">Field Sourcing Map</div>
+          <table class="grid" style="font-size:11px">
+            <thead><tr><th>Category</th><th>Source</th><th>Examples</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill pill-info">Dropdowns</span></td><td>Odoo (GET)</td><td>Customer, Opportunity, Skills, Seniority, Location, Currency</td></tr>
+              <tr><td><span class="pill pill-ok">Real-time calc</span></td><td>Web App JS</td><td>Monthly subtotal, HR total, Travel total, Price, Margin, Gauge %</td></tr>
+              <tr><td><span class="pill pill-warn">Manual type</span></td><td>Pre-sales</td><td>Project name, Duration, Allocation %, Comments, Budget</td></tr>
+              <tr><td><span class="pill pill-err">Push-only</span></td><td>Web &rarr; Odoo</td><td>Final quote snapshot, approval audit, version metadata</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card col">
+          <div class="card-title">Technology Stack</div>
+          <table class="grid" style="font-size:11px">
+            <tr><td>Web App Frontend</td><td>Next.js 14 + TypeScript + Tailwind</td></tr>
+            <tr><td>Web App Backend</td><td>Node/NestJS (REST) + PostgreSQL</td></tr>
+            <tr><td>Auth</td><td>SAML SSO with Odoo (SCIM sync)</td></tr>
+            <tr><td>Odoo API</td><td>Existing <code>tmc_api</code> addon + new endpoints</td></tr>
+            <tr><td>LLM (Phase 1)</td><td>Claude API via server-side proxy</td></tr>
+            <tr><td>Voice (Phase 2)</td><td>Whisper &rarr; LLM &rarr; TTS, browser + mobile</td></tr>
+            <tr><td>Deployment</td><td>Web app: tmc.cloud / Odoo: on-prem</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Why Web App Owns Everything Until Push</div>
+        <ul style="margin:6px 0 0 20px;font-size:12px;line-height:1.7">
+          <li><strong>Pre-sales iterates dozens of times per quote</strong> &mdash; cluttering Odoo with scratchpad data breaks audit hygiene.</li>
+          <li><strong>AI / voice is the future primary interface</strong> &mdash; a purpose-built web app is the right home for this; Odoo UI cannot evolve fast enough.</li>
+          <li><strong>Approvals can use custom SLAs, threads, diffs</strong> &mdash; Odoo&apos;s native approvals are generic and rigid.</li>
+          <li><strong>Odoo stays clean</strong> &mdash; only approved quotes become sale orders, so finance &amp; project teams see one source of truth.</li>
+          <li><strong>Read-only from Odoo is cheap &amp; safe</strong> &mdash; masters rarely change; bearer-token GETs with cache handle 99% of lookups.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- AI Assistant Floating Button + Panel -->
+<button id="aiToggle" onclick="toggleAI()">&#9677; AI Assistant</button>
+<div id="aiPanel">
+  <div class="ai-header">
+    <div>
+      <strong>AI Assistant</strong>
+      <div style="font-size:10px;opacity:0.8">Phase 1 &middot; text chat &middot; voice coming</div>
+    </div>
+    <span style="cursor:pointer;font-size:18px" onclick="toggleAI()">&times;</span>
+  </div>
+  <div class="ai-body" id="aiBody">
+    <div class="ai-msg ai-bot">Hi Safi &mdash; I can help draft, compare, or revise this quote. Try:
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">
+        <button class="ai-chip" onclick="askAI('Add 2 Senior FI for months 3-5')">Add 2 Senior FI for months 3-5</button>
+        <button class="ai-chip" onclick="askAI('Why is margin 15% and not higher?')">Why margin = 15%?</button>
+        <button class="ai-chip" onclick="askAI('Show me a leaner alternative')">Show me a leaner alternative</button>
+        <button class="ai-chip" onclick="askAI('Explain the budget gauge')">Explain the budget gauge</button>
+      </div>
+    </div>
+  </div>
+  <div class="ai-input">
+    <input type="text" id="aiInput" placeholder="Ask anything... e.g. 'reduce onsite in Wave 2'" onkeypress="if(event.key==='Enter') submitAI()">
+    <button onclick="submitAI()">&#10148;</button>
+  </div>
+  <div style="padding:6px 12px;background:#f8fafc;font-size:10px;color:var(--muted);border-top:1px solid var(--border);text-align:center">
+    &#127908; Voice input arrives in Phase 2
+  </div>
+</div>
+
+<style>
+  #aiToggle {
+    position: fixed; right: 20px; bottom: 20px; z-index: 100;
+    background: var(--brand); color: #fff; border: none; border-radius: 28px;
+    padding: 12px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(30,58,95,0.3);
+  }
+  #aiToggle:hover { background: var(--brand-light); }
+  #aiPanel {
+    position: fixed; right: 20px; bottom: 80px; width: 360px; max-height: 520px;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 99;
+    display: none; flex-direction: column; overflow: hidden;
+  }
+  #aiPanel.open { display: flex; }
+  .ai-header { background: var(--brand); color: #fff; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .ai-body { flex: 1; overflow-y: auto; padding: 12px; font-size: 12px; max-height: 380px; }
+  .ai-msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; }
+  .ai-bot { background: #f1f5f9; color: var(--text); }
+  .ai-user { background: var(--accent); color: #fff; margin-left: 30px; }
+  .ai-input { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--border); }
+  .ai-input input { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }
+  .ai-input button { padding: 7px 14px; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+  .ai-chip { background: #fff; border: 1px solid var(--border); padding: 5px 9px; border-radius: 12px; font-size: 11px; cursor: pointer; text-align: left; }
+  .ai-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .ai-impact { background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 11px; }
+  .ai-impact strong { color: #92400e; }
+  .ai-actions { display: flex; gap: 6px; margin-top: 6px; }
+  .ai-actions button { flex:1; padding: 5px 8px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: #fff; }
+  .ai-actions .apply { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+
+<script>
+  function toggleAI() {
+    document.getElementById('aiPanel').classList.toggle('open');
+  }
+  function askAI(q) {
+    document.getElementById('aiInput').value = q;
+    submitAI();
+  }
+  function submitAI() {
+    const input = document.getElementById('aiInput');
+    const q = input.value.trim();
+    if (!q) return;
+    const body = document.getElementById('aiBody');
+    const u = document.createElement('div');
+    u.className = 'ai-msg ai-user';
+    u.textContent = q;
+    body.appendChild(u);
+    input.value = '';
+    setTimeout(() => respondAI(q), 400);
+    body.scrollTop = body.scrollHeight;
+  }
+  function respondAI(q) {
+    const body = document.getElementById('aiBody');
+    const b = document.createElement('div');
+    b.className = 'ai-msg ai-bot';
+    let html = '';
+    const ql = q.toLowerCase();
+    if (ql.includes('senior fi') || ql.includes('add 2')) {
+      html = `I can add 2 Senior FI consultants for months 3&ndash;5 at 100% allocation (offshore KSA rates).
+        <div class="ai-impact">
+          <strong>Impact Preview:</strong><br>
+          HR Cost: 35.07M &rarr; 40.95M (+5.88M)<br>
+          Total Cost: 42.99M &rarr; 48.87M<br>
+          Budget Gauge: 95.5% &rarr; <span style="color:#dc2626">108.6% over</span><br>
+          Margin unchanged at 15%
+        </div>
+        <div class="ai-actions">
+          <button class="apply">Apply</button>
+          <button>Preview Diff</button>
+          <button>Dismiss</button>
+        </div>`;
+    } else if (ql.includes('margin')) {
+      html = `Margin 15% is the default from your org&apos;s policy for customers in the <em>Tier-1 Enterprise</em> segment. SABIC falls in this band. Lower: needs L2 approval. Higher: reduces win probability. Historical win rate at 15%: 68%.`;
+    } else if (ql.includes('lean')) {
+      html = `Scenario B (already saved) trims onsite FI-months from 18 to 8 by rotating to offshore for Wave 2 onwards. Cost drops to PKR 31.9M (-11.1M, -26%). Risk: SABIC blueprint governance typically requires 2 onsite Sr FI during sign-off.
+        <div class="ai-actions">
+          <button class="apply">Open Scenario B</button>
+          <button>Dismiss</button>
+        </div>`;
+    } else if (ql.includes('gauge') || ql.includes('budget')) {
+      html = `The gauge shows <strong>cost as % of customer budget</strong>. Green: 0&ndash;95% (healthy). Amber: 95&ndash;100% (tight). Red: &gt;100% (over &mdash; blocks submission). You&apos;re at 95.5% &mdash; acceptable.`;
+    } else {
+      html = `Working on that... (demo response). In production, the AI reads the current quote state, applies validation rules, and returns either a suggested edit with impact preview or a natural-language explanation.`;
+    }
+    b.innerHTML = html;
+    body.appendChild(b);
+    body.scrollTop = body.scrollHeight;
+  }
+</script>
+
+<script>
+  // Nav toggle
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+      n.classList.add('active');
+      showView(n.dataset.view);
+    });
+  });
+  function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const el = document.getElementById('view-' + id);
+    if (el) el.classList.add('active');
+  }
+</script>
+
+<!-- ========= Odoo bridge integration (added by tmc_web_app) ========= -->
+<div id="odoo-status-badge" style="position:fixed;bottom:10px;right:14px;background:#111827;color:#fff;font-size:11px;padding:6px 10px;border-radius:14px;font-family:system-ui,sans-serif;z-index:9999;opacity:0.92">
+  Odoo: <span id="odoo-status-text" style="color:#fbbf24">connecting&hellip;</span>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
